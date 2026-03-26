@@ -755,59 +755,83 @@ export default function App() {
               </div>
             </section>
 
-            {/* GRAPHIQUE DES DÉPENSES */}
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-              <div className="flex justify-between items-center mb-4">
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Dépenses par catégorie</p>
-              </div>
-              <div className="space-y-3">
-                {monthlyStats.depenses === 0 ? <p className="text-slate-400 text-sm">Aucune dépense ce mois-ci.</p> : null}
-                {Object.entries(monthlyStats.categories).sort((a,b) => b[1] - a[1]).map(([cat, amt]) => (
-                  <div key={cat} className="flex items-center gap-3">
-                    <span className="w-32 text-xs font-medium text-slate-600 truncate">{cat}</span>
-                    <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
-                      <div className="bg-rose-500 h-full rounded-full" style={{width: `${(amt / monthlyStats.depenses) * 100}%`}}></div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* COLONNE GAUCHE: FORMULAIRES */}
+              <div className="lg:col-span-4 space-y-6">
+                
+                {/* Form 1 : Opération Quotidienne */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">1</div>Opération Quotidienne</h3>
+                  <form onSubmit={handleAddDailyOp} className="space-y-4">
+                    <input type="date" required value={opDate} onChange={e => setOpDate(e.target.value)} className="w-full rounded-lg border-slate-300" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input type="number" min="0" placeholder="Recette (+)" value={opRecette} onChange={e => setOpRecette(e.target.value)} className="w-full rounded-lg border-slate-300 focus:ring-emerald-500" />
+                      <input type="number" min="0" placeholder="Dépense (-)" value={opDepense} onChange={e => setOpDepense(e.target.value)} className="w-full rounded-lg border-slate-300 focus:ring-rose-500" />
                     </div>
-                    <span className="w-24 text-right text-xs font-bold text-rose-600">{formatCurrency(amt)}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
+                    <input type="text" placeholder="Description..." value={opDesc} onChange={e => setOpDesc(e.target.value)} className="w-full rounded-lg border-slate-300" />
+                    
+                    {parseFloat(opDepense) > 0 && (
+                      <select value={opCategory} onChange={e => setOpCategory(e.target.value)} className="w-full rounded-lg border-slate-300 text-sm text-slate-600">
+                        {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    )}
+                    
+                    <button type="submit" className="w-full bg-slate-800 text-white py-2.5 rounded-lg font-semibold hover:bg-slate-900 transition-colors">Enregistrer</button>
+                  </form>
+                </div>
 
-            {/* FORMULAIRES CAISSE */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">1</div>Opération Quotidienne</h3>
-                <form onSubmit={handleAddDailyOp} className="space-y-4">
-                  <input type="date" required value={opDate} onChange={e => setOpDate(e.target.value)} className="w-full rounded-lg border-slate-300" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <input type="number" min="0" placeholder="Recette (+)" value={opRecette} onChange={e => setOpRecette(e.target.value)} className="w-full rounded-lg border-slate-300 focus:ring-emerald-500" />
-                    <input type="number" min="0" placeholder="Dépense (-)" value={opDepense} onChange={e => setOpDepense(e.target.value)} className="w-full rounded-lg border-slate-300 focus:ring-rose-500" />
-                  </div>
-                  <input type="text" placeholder="Description..." value={opDesc} onChange={e => setOpDesc(e.target.value)} className="w-full rounded-lg border-slate-300" />
-                  
-                  {parseFloat(opDepense) > 0 && (
-                    <select value={opCategory} onChange={e => setOpCategory(e.target.value)} className="w-full rounded-lg border-slate-300 text-sm text-slate-600">
-                      {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {/* Form 2 : Débit d'un Compte */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">2</div>Retrait d'un Compte</h3>
+                  <form onSubmit={handleDebit} className="space-y-4">
+                    <input type="date" required value={debDate} onChange={e => setDebDate(e.target.value)} className="w-full rounded-lg border-slate-300" />
+                    <select value={debAccount} onChange={e => setDebAccount(e.target.value)} className="w-full rounded-lg border-slate-300 text-sm">
+                      {ACCOUNTS_CONFIG.map(acc => <option key={acc.id} value={acc.id}>{acc.name} (Solde: {formatCurrency(accountBalances[acc.id])})</option>)}
                     </select>
-                  )}
-                  
-                  <button type="submit" className="w-full bg-slate-800 text-white py-2.5 rounded-lg font-semibold">Enregistrer</button>
-                </form>
+                    <input type="number" step="0.01" min="1" required placeholder="Montant à retirer" value={debAmount} onChange={e => setDebAmount(e.target.value)} className="w-full rounded-lg border-slate-300" />
+                    <input type="text" required placeholder="Motif du retrait (ex: Achat imprimante)" value={debDesc} onChange={e => setDebDesc(e.target.value)} className="w-full rounded-lg border-slate-300" />
+                    <button type="submit" className="w-full bg-white border-2 border-slate-800 text-slate-800 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition-colors">Valider le retrait</button>
+                  </form>
+                </div>
+
               </div>
 
-              {/* COMPTES DÉDIÉS */}
-              <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                 <h3 className="text-xl font-bold text-slate-800 mb-6">Comptes Dédiés (Épargne & Charges)</h3>
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {ACCOUNTS_CONFIG.map((acc) => (
-                      <div key={acc.id} className={`p-4 rounded-xl border ${acc.borderColor} bg-white shadow-sm flex flex-col`}>
-                        <div className="flex items-center gap-2 mb-2"><div className={`w-3 h-3 rounded-full ${acc.color}`}></div><span className="text-xs font-bold text-slate-500 uppercase">{acc.parent}</span></div>
-                        <h4 className={`text-sm font-semibold mb-2 ${acc.textColor}`}>{acc.name}</h4>
-                        <p className="text-2xl font-bold text-slate-800">{formatCurrency(accountBalances[acc.id])}</p>
+              {/* COLONNE DROITE: COMPTES & GRAPHIQUE */}
+              <div className="lg:col-span-8 space-y-6">
+                
+                {/* COMPTES DÉDIÉS */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                   <h3 className="text-xl font-bold text-slate-800 mb-6">Comptes Dédiés (Épargne & Charges)</h3>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {ACCOUNTS_CONFIG.map((acc) => (
+                        <div key={acc.id} className={`p-4 rounded-xl border ${acc.borderColor} bg-white shadow-sm flex flex-col`}>
+                          <div className="flex items-center gap-2 mb-2"><div className={`w-3 h-3 rounded-full ${acc.color}`}></div><span className="text-xs font-bold text-slate-500 uppercase">{acc.parent}</span></div>
+                          <h4 className={`text-sm font-semibold mb-2 ${acc.textColor}`}>{acc.name}</h4>
+                          <p className="text-2xl font-bold text-slate-800">{formatCurrency(accountBalances[acc.id])}</p>
+                        </div>
+                      ))}
+                    </div>
+                </div>
+
+                {/* GRAPHIQUE DES DÉPENSES */}
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Dépenses par catégorie</p>
+                  </div>
+                  <div className="space-y-3">
+                    {monthlyStats.depenses === 0 ? <p className="text-slate-400 text-sm">Aucune dépense ce mois-ci.</p> : null}
+                    {Object.entries(monthlyStats.categories).sort((a,b) => b[1] - a[1]).map(([cat, amt]) => (
+                      <div key={cat} className="flex items-center gap-3">
+                        <span className="w-32 text-xs font-medium text-slate-600 truncate">{cat}</span>
+                        <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+                          <div className="bg-rose-500 h-full rounded-full" style={{width: `${(amt / monthlyStats.depenses) * 100}%`}}></div>
+                        </div>
+                        <span className="w-24 text-right text-xs font-bold text-rose-600">{formatCurrency(amt)}</span>
                       </div>
                     ))}
                   </div>
+                </div>
+
               </div>
             </div>
             
